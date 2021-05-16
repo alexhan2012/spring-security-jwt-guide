@@ -24,9 +24,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * @author shuang.kou Saving
+ * @version 1.1
  * @date 2020.11.28 14:16
  * @description Spring Security配置类
- * @version 1.1
  **/
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -53,15 +53,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 // 禁用 CSRF
                 .csrf().disable()
                 .authorizeRequests()
+                // 指定的接口直接放行
                 // swagger
                 .antMatchers(SecurityConstants.SWAGGER_WHITELIST).permitAll()
-                // 登录接口
-                .antMatchers(HttpMethod.POST, SecurityConstants.LOGIN_WHITELIST).permitAll()
-                // 指定路径下的资源需要验证了的用户才能访问
-                .antMatchers(SecurityConstants.FILTER_ALL).authenticated()
-                .antMatchers(HttpMethod.DELETE, SecurityConstants.FILTER_ALL).hasRole("ADMIN")
-                // 其他都放行了
-                .anyRequest().permitAll()
+                .antMatchers(SecurityConstants.H2_CONSOLE).permitAll()
+                .antMatchers(HttpMethod.POST, SecurityConstants.SYSTEM_WHITELIST).permitAll()
+                // 其他的接口都需要认证后才能请求
+                .anyRequest().authenticated()
                 .and()
                 //添加自定义Filter
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), stringRedisTemplate))
@@ -86,7 +84,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "DELETE", "PUT", "OPTIONS"));
         configuration.setExposedHeaders(singletonList(SecurityConstants.TOKEN_HEADER));
         configuration.setAllowCredentials(false);
-        configuration.setMaxAge(3600l);
+        configuration.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
